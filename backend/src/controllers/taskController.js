@@ -1,0 +1,12 @@
+import Task from "../models/Task.js";
+import Notification from "../models/Notification.js";
+import Activity from "../models/Activity.js";
+import {AppError} from "../utils/AppError.js";
+import {asyncHandler} from "../utils/asyncHandler.js";
+export const getTasks=asyncHandler(async(req,res)=>res.json({success:true,tasks:await Task.findVisible(req.user._id,{project:req.query.project,status:req.query.status,priority:req.query.priority})}));
+export const getTask=asyncHandler(async(req,res)=>{const task=await Task.findById(req.params.id);if(!task)throw new AppError("Task not found.",404);res.json({success:true,task,activity:await Activity.findByTask(task._id)})});
+export const createTask=asyncHandler(async(req,res)=>{const {title,description,project,assignee,priority,dueDate,tags,status}=req.body;const task=await Task.create({title,description,project,assignee,priority,dueDate,tags,status,createdBy:req.user._id});await Activity.create({user:req.user._id,task:task._id,project,action:"created this task"});if(assignee&&Number(assignee)!==Number(req.user._id))await Notification.create({user:assignee,type:"assignment",title:`${req.user.name} assigned you a task`,body:title,relatedTask:task._id,relatedProject:project});res.status(201).json({success:true,task:await Task.findById(task._id)})});
+export const updateTask=asyncHandler(async(req,res)=>{let data={...req.body};if(data.status==="completed"&&!data.completedAt)data.completedAt=new Date();const task=await Task.update(req.params.id,data);if(!task)throw new AppError("Task not found.",404);res.json({success:true,task})});
+export const updateTaskStatus=asyncHandler(async(req,res)=>{const task=await Task.findById(req.params.id);if(!task)throw new AppError("Task not found.",404);const previous=task.status;const updated=await Task.update(task._id,{status:req.body.status,completedAt:req.body.status==="completed"?new Date():null});await Activity.create({user:req.user._id,task:task._id,project:task.projectId,action:`changed status from ${previous.replace("_"," ")} to ${req.body.status.replace("_"," ")}`});res.json({success:true,task:updated})});
+export const updateTaskPriority=asyncHandler(async(req,res)=>{const task=await Task.update(req.params.id,{priority:req.body.priority});if(!task)throw new AppError("Task not found.",404);res.json({success:true,task})});
+export const deleteTask=asyncHandler(async(req,res)=>{if(!await Task.delete(req.params.id))throw new AppError("Task not found.",404);res.json({success:true,message:"Task deleted."})});

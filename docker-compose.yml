@@ -1,0 +1,64 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: workboard-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-workboard}
+      MYSQL_USER: ${DB_USER:-workboard}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-workboard_password}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_password}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u$${MYSQL_USER} -p$${MYSQL_PASSWORD} --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks: [workboard]
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: workboard-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 5431
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-workboard}
+      DB_USER: ${DB_USER:-workboard}
+      DB_PASSWORD: ${DB_PASSWORD:-workboard_password}
+      JWT_SECRET: ${JWT_SECRET:-change_this_in_production}
+      FRONTEND_URL: http://localhost:8070
+      AI_PROVIDER: ${AI_PROVIDER:-}
+      AI_API_KEY: ${AI_API_KEY:-}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "5431:5431"
+    networks: [workboard]
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: workboard-frontend
+    restart: unless-stopped
+    ports:
+      - "8070:80"
+    depends_on:
+      backend:
+        condition: service_started
+    networks: [workboard]
+
+volumes:
+  mysql_data:
+
+networks:
+  workboard:
+    driver: bridge

@@ -1,0 +1,3 @@
+import User from "../models/User.js";import Task from "../models/Task.js";import Project from "../models/Project.js";import {asyncHandler} from "../utils/asyncHandler.js";
+export const getTeam=asyncHandler(async(req,res)=>{const members=await User.findAll();const withStats=await Promise.all(members.map(async m=>({ ...m,taskCount:await Task.countWhere("assigneeId=? AND status<> 'completed'",[m._id]),projectCount:await Project.findVisible(m._id).then(x=>x.length)})));res.json({success:true,members:withStats})});
+export const updateProfile=asyncHandler(async(req,res)=>{const {name,title}=req.body;res.json({success:true,user:await User.updateProfile(req.user._id,{name,title})})});

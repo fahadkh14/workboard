@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --wb-bg: #f7f8fc;
+  --wb-surface: #ffffff;
+  --wb-elevated: #ffffff;
+  --wb-border: #e5e7eb;
+  --wb-primary: #5b5ce2;
+  --wb-secondary: #7c3aed;
+  --wb-text: #111827;
+  --wb-muted: #6b7280;
+  --wb-success: #10b981;
+  --wb-warning: #f59e0b;
+  --wb-danger: #ef4444;
+  --wb-info: #3b82f6;
+}
+
+.dark {
+  --wb-bg: #0b0d12;
+  --wb-surface: #12151c;
+  --wb-elevated: #181c25;
+  --wb-border: #252a35;
+  --wb-primary: #7c7ef5;
+  --wb-secondary: #9d7bf0;
+  --wb-text: #f3f4f6;
+  --wb-muted: #9ca3af;
+  --wb-success: #34d399;
+  --wb-warning: #fbbf24;
+  --wb-danger: #f87171;
+  --wb-info: #60a5fa;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", system-ui, sans-serif;
+  background-color: var(--wb-bg);
+  color: var(--wb-text);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--wb-border);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--wb-primary);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@layer components {
+  .card {
+    @apply bg-surface border border-border rounded-card shadow-subtle;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-btn bg-primary text-white font-semibold text-sm px-4 py-2.5 transition-all duration-150 hover:opacity-90 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-btn bg-elevated border border-border text-text font-medium text-sm px-4 py-2.5 transition-all duration-150 hover:brightness-95 active:scale-[0.98];
+  }
+  .input-field {
+    @apply w-full rounded-input border border-border bg-elevated px-3.5 py-2.5 text-sm text-text placeholder:text-muted outline-none transition-colors focus:border-primary;
+  }
+  .pill {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium;
+  }
+}
+
+@keyframes wb-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.wb-animate-in {
+  animation: wb-fade-in 200ms ease both;
+}
