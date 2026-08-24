@@ -1,6 +1,6 @@
 pipeline {
     agent  { label "workboard" }
-
+ 
     stages {
 
         // Clone Workboard source code from GitHub
