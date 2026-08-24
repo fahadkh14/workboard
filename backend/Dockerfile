@@ -1,6 +1,6 @@
 FROM node:22-alpine AS dependencies
 WORKDIR /app
-
+#copy packages
 COPY package*.json ./
 RUN npm install --omit=dev && npm cache clean --force
 
