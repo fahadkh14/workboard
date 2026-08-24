@@ -1,5 +1,5 @@
 pipeline {
-    agent  { label "workboard"};
+    agent  { label "workboard" }
 
     stages {
 
