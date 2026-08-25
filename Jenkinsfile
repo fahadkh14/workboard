@@ -32,7 +32,7 @@ pipeline {
 
         stage("Security - Gitleaks") {
             steps {
-                echo "Scanning WorkBoard for Hardcoded Secrets..."
+                echo "Scanning for Hardcoded Secrets..."
 
                 sh '''
                     docker run --rm \
@@ -48,7 +48,7 @@ pipeline {
 
         stage("Security - Semgrep SAST") {
             steps {
-                echo "Running Static Application Security Testing..."
+                echo "Running Semgrep SAST..."
 
                 sh '''
                     docker run --rm \
@@ -71,13 +71,24 @@ pipeline {
                         sonar-scanner \
                         -Dsonar.projectKey=workboard \
                         -Dsonar.projectName=WorkBoard \
-                        -Dsonar.sources=.
+                        -Dsonar.sources=. \
+                        -Dsonar.sourceEncoding=UTF-8
                     '''
                 }
             }
         }
 
-        stage("Security - Dependency Check") {
+        stage("SonarQube Quality Gate") {
+            steps {
+                echo "Checking SonarQube Quality Gate..."
+
+                timeout(time: 5, unit: "MINUTES") {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage("Security - OWASP Dependency Check") {
             steps {
                 echo "Running OWASP Dependency Check..."
 
@@ -96,9 +107,11 @@ pipeline {
 
         stage("Test") {
             steps {
-                echo "Testing WorkBoard Docker Compose Configuration..."
+                echo "Validating Docker Compose..."
 
-                sh "docker compose config"
+                sh '''
+                    docker compose config
+                '''
             }
         }
 
@@ -106,17 +119,17 @@ pipeline {
             steps {
                 echo "Building WorkBoard Docker Images..."
 
-                sh "docker compose build"
+                sh '''
+                    docker compose build
+                '''
             }
         }
 
         stage("Security - Trivy") {
             steps {
-                echo "Scanning WorkBoard Docker Images..."
+                echo "Scanning Backend Image..."
 
                 sh '''
-                    echo "Scanning Backend Image..."
-
                     docker run --rm \
                     -v /var/run/docker.sock:/var/run/docker.sock \
                     aquasec/trivy:latest \
@@ -124,9 +137,11 @@ pipeline {
                     --severity HIGH,CRITICAL \
                     --exit-code 1 \
                     workboard-backend:latest
+                '''
 
-                    echo "Scanning Frontend Image..."
+                echo "Scanning Frontend Image..."
 
+                sh '''
                     docker run --rm \
                     -v /var/run/docker.sock:/var/run/docker.sock \
                     aquasec/trivy:latest \
@@ -141,11 +156,13 @@ pipeline {
         stage("Push to Docker Hub") {
             steps {
 
-                withCredentials([usernamePassword(
-                    credentialsId: "dockerHubCreds",
-                    usernameVariable: "dockerHubUser",
-                    passwordVariable: "dockerHubPass"
-                )]) {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: "dockerHubCreds",
+                        usernameVariable: "dockerHubUser",
+                        passwordVariable: "dockerHubPass"
+                    )
+                ]) {
 
                     sh '''
                         echo "$dockerHubPass" | \
@@ -153,24 +170,16 @@ pipeline {
                         -u "$dockerHubUser" \
                         --password-stdin
 
-                        echo "Tagging Backend Image..."
-
                         docker image tag \
                         workboard-backend:latest \
                         "$dockerHubUser/workboard-backend:latest"
-
-                        echo "Tagging Frontend Image..."
 
                         docker image tag \
                         workboard-frontend:latest \
                         "$dockerHubUser/workboard-frontend:latest"
 
-                        echo "Pushing Backend Image..."
-
                         docker push \
                         "$dockerHubUser/workboard-backend:latest"
-
-                        echo "Pushing Frontend Image..."
 
                         docker push \
                         "$dockerHubUser/workboard-frontend:latest"
@@ -183,28 +192,24 @@ pipeline {
 
         stage("Deploy") {
             steps {
+                echo "Deploying WorkBoard..."
 
-                echo "Starting WorkBoard Application..."
-
-                sh "docker compose up -d"
-
-                echo "Checking WorkBoard Running Containers..."
-
-                sh "docker compose ps"
+                sh '''
+                    docker compose up -d
+                    docker compose ps
+                '''
             }
         }
 
         stage("Health Check") {
             steps {
 
-                echo "Checking WorkBoard Application Health..."
+                echo "Checking WorkBoard Application..."
 
                 sh '''
                     sleep 10
 
                     docker compose ps
-
-                    echo "Checking Frontend..."
 
                     curl -f http://localhost:8070/ || exit 1
 
@@ -218,19 +223,19 @@ pipeline {
 
         success {
             echo "=========================================="
-            echo "WorkBoard CI/CD + DevSecOps SUCCESS"
+            echo "WORKBOARD CI/CD + DEVSECOPS SUCCESS"
             echo "=========================================="
         }
 
         failure {
             echo "=========================================="
-            echo "WorkBoard Pipeline FAILED"
-            echo "Check Jenkins Console Output"
+            echo "WORKBOARD PIPELINE FAILED"
+            echo "CHECK JENKINS CONSOLE OUTPUT"
             echo "=========================================="
         }
 
         always {
-            echo "WorkBoard Pipeline Execution Completed."
+            echo "WorkBoard Pipeline Completed."
         }
     }
 }
