@@ -23,16 +23,24 @@ pipeline {
                 echo "Checking Build Environment..."
 
                 sh '''
+                    echo "Docker:"
                     docker --version
+
+                    echo "Docker Compose:"
                     docker compose version
+
+                    echo "Git:"
                     git --version
+
+                    echo "Java:"
+                    java -version
                 '''
             }
         }
 
         stage("Security - Gitleaks") {
             steps {
-                echo "Scanning for Hardcoded Secrets..."
+                echo "Scanning WorkBoard for Hardcoded Secrets..."
 
                 sh '''
                     docker run --rm \
@@ -66,14 +74,20 @@ pipeline {
             steps {
                 echo "Running SonarQube Analysis..."
 
-                withSonarQubeEnv("SonarQube") {
-                    sh '''
-                        sonar-scanner \
-                        -Dsonar.projectKey=workboard \
-                        -Dsonar.projectName=WorkBoard \
-                        -Dsonar.sources=. \
-                        -Dsonar.sourceEncoding=UTF-8
-                    '''
+                script {
+
+                    def scannerHome = tool "SonarScanner"
+
+                    withSonarQubeEnv("SonarQube") {
+
+                        sh """
+                            ${scannerHome}/bin/sonar-scanner \
+                            -Dsonar.projectKey=workboard \
+                            -Dsonar.projectName=WorkBoard \
+                            -Dsonar.sources=. \
+                            -Dsonar.sourceEncoding=UTF-8
+                        """
+                    }
                 }
             }
         }
@@ -83,6 +97,7 @@ pipeline {
                 echo "Checking SonarQube Quality Gate..."
 
                 timeout(time: 5, unit: "MINUTES") {
+
                     waitForQualityGate abortPipeline: true
                 }
             }
@@ -105,9 +120,9 @@ pipeline {
             }
         }
 
-        stage("Test") {
+        stage("Docker Compose Test") {
             steps {
-                echo "Validating Docker Compose..."
+                echo "Validating Docker Compose Configuration..."
 
                 sh '''
                     docker compose config
@@ -115,7 +130,7 @@ pipeline {
             }
         }
 
-        stage("Build") {
+        stage("Build Docker Images") {
             steps {
                 echo "Building WorkBoard Docker Images..."
 
@@ -125,9 +140,9 @@ pipeline {
             }
         }
 
-        stage("Security - Trivy") {
+        stage("Security - Trivy Backend") {
             steps {
-                echo "Scanning Backend Image..."
+                echo "Scanning Backend Docker Image..."
 
                 sh '''
                     docker run --rm \
@@ -138,8 +153,12 @@ pipeline {
                     --exit-code 1 \
                     workboard-backend:latest
                 '''
+            }
+        }
 
-                echo "Scanning Frontend Image..."
+        stage("Security - Trivy Frontend") {
+            steps {
+                echo "Scanning Frontend Docker Image..."
 
                 sh '''
                     docker run --rm \
@@ -170,16 +189,24 @@ pipeline {
                         -u "$dockerHubUser" \
                         --password-stdin
 
+                        echo "Tagging Backend Image..."
+
                         docker image tag \
                         workboard-backend:latest \
                         "$dockerHubUser/workboard-backend:latest"
+
+                        echo "Tagging Frontend Image..."
 
                         docker image tag \
                         workboard-frontend:latest \
                         "$dockerHubUser/workboard-frontend:latest"
 
+                        echo "Pushing Backend Image..."
+
                         docker push \
                         "$dockerHubUser/workboard-backend:latest"
+
+                        echo "Pushing Frontend Image..."
 
                         docker push \
                         "$dockerHubUser/workboard-frontend:latest"
@@ -192,10 +219,14 @@ pipeline {
 
         stage("Deploy") {
             steps {
-                echo "Deploying WorkBoard..."
+
+                echo "Deploying WorkBoard Application..."
 
                 sh '''
+                    docker compose down || true
+
                     docker compose up -d
+
                     docker compose ps
                 '''
             }
@@ -204,16 +235,19 @@ pipeline {
         stage("Health Check") {
             steps {
 
-                echo "Checking WorkBoard Application..."
+                echo "Checking WorkBoard Application Health..."
 
                 sh '''
                     sleep 10
 
+                    echo "Running Containers:"
                     docker compose ps
+
+                    echo "Checking Frontend..."
 
                     curl -f http://localhost:8070/ || exit 1
 
-                    echo "WorkBoard Health Check Passed."
+                    echo "WorkBoard Application is Healthy."
                 '''
             }
         }
@@ -235,7 +269,9 @@ pipeline {
         }
 
         always {
-            echo "WorkBoard Pipeline Completed."
+            echo "=========================================="
+            echo "WORKBOARD PIPELINE COMPLETED"
+            echo "=========================================="
         }
     }
 }
