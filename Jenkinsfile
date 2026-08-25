@@ -3,22 +3,27 @@ pipeline {
 
     agent { label "workboard" }
 
+    environment {
+        DOCKER_IMAGE_BACKEND = "workboard-backend"
+        DOCKER_IMAGE_FRONTEND = "workboard-frontend"
+    }
+
     stages {
 
         // ============================================================
-        // 1. Clone DeployGuard source code from GitHub
+        // 1. Clone WorkBoard Source Code
         // ============================================================
         stage("Copy Code") {
             steps {
-                echo "Cloning DeployGuard Repository..."
+                echo "Cloning WorkBoard Repository..."
 
-                git url: "https://github.com/fahadkh14/deployguard.git",
-                    branch: "main"
+                git url: "https://github.com/fahadkh14/workboard.git",
+                    branch: "master"
             }
         }
 
         // ============================================================
-        // 2. Check Environment
+        // 2. Environment Check
         // ============================================================
         stage("Environment Check") {
             steps {
@@ -33,11 +38,11 @@ pipeline {
         }
 
         // ============================================================
-        // 3. Secret Scanning - Gitleaks
+        // 3. Secret Scan - Gitleaks
         // ============================================================
-        stage("Secret Scan - Gitleaks") {
+        stage("Security - Gitleaks") {
             steps {
-                echo "Scanning Repository for Secrets..."
+                echo "Scanning WorkBoard for Hardcoded Secrets..."
 
                 sh '''
                     docker run --rm \
@@ -54,7 +59,7 @@ pipeline {
         // ============================================================
         // 4. SAST - Semgrep
         // ============================================================
-        stage("SAST - Semgrep") {
+        stage("Security - Semgrep SAST") {
             steps {
                 echo "Running Static Application Security Testing..."
 
@@ -73,15 +78,15 @@ pipeline {
         // ============================================================
         // 5. SonarQube Code Quality
         // ============================================================
-        stage("SonarQube Analysis") {
+        stage("Code Quality - SonarQube") {
             steps {
-                echo "Running SonarQube Code Quality Analysis..."
+                echo "Running SonarQube Analysis..."
 
                 withSonarQubeEnv("SonarQube") {
                     sh '''
                         sonar-scanner \
-                        -Dsonar.projectKey=deployguard \
-                        -Dsonar.projectName=DeployGuard \
+                        -Dsonar.projectKey=workboard \
+                        -Dsonar.projectName=WorkBoard \
                         -Dsonar.sources=.
                     '''
                 }
@@ -89,61 +94,80 @@ pipeline {
         }
 
         // ============================================================
-        // 6. Validate Docker Compose
+        // 6. OWASP Dependency Check
+        // ============================================================
+        stage("Security - Dependency Check") {
+            steps {
+                echo "Running OWASP Dependency Check..."
+
+                sh '''
+                    docker run --rm \
+                    -v "$PWD:/src" \
+                    owasp/dependency-check:latest \
+                    --scan /src \
+                    --format HTML \
+                    --format XML \
+                    --out /src/dependency-check-report \
+                    --project WorkBoard
+                '''
+            }
+        }
+
+        // ============================================================
+        // 7. Docker Compose Configuration Test
         // ============================================================
         stage("Test") {
             steps {
-                echo "Validating Docker Compose Configuration..."
+                echo "Testing WorkBoard Docker Compose Configuration..."
 
                 sh "docker compose config"
             }
         }
 
         // ============================================================
-        // 7. Build Docker Images
+        // 8. Build Docker Images
         // ============================================================
         stage("Build") {
             steps {
-                echo "Building DeployGuard Docker Images..."
+                echo "Building WorkBoard Docker Images..."
 
                 sh "docker compose build"
             }
         }
 
         // ============================================================
-        // 8. Trivy Container Security Scan
+        // 9. Trivy Docker Image Security Scan
         // ============================================================
-        stage("Container Security Scan - Trivy") {
+        stage("Security - Trivy") {
             steps {
-                echo "Scanning Docker Images for Vulnerabilities..."
+                echo "Scanning WorkBoard Docker Images..."
 
                 sh '''
-                    BACKEND_IMAGE=$(docker compose images -q backend)
-                    FRONTEND_IMAGE=$(docker compose images -q frontend)
-
                     echo "Scanning Backend Image..."
+
                     docker run --rm \
                     -v /var/run/docker.sock:/var/run/docker.sock \
                     aquasec/trivy:latest \
                     image \
                     --severity HIGH,CRITICAL \
                     --exit-code 1 \
-                    "$BACKEND_IMAGE"
+                    workboard-backend:latest
 
                     echo "Scanning Frontend Image..."
+
                     docker run --rm \
                     -v /var/run/docker.sock:/var/run/docker.sock \
                     aquasec/trivy:latest \
                     image \
                     --severity HIGH,CRITICAL \
                     --exit-code 1 \
-                    "$FRONTEND_IMAGE"
+                    workboard-frontend:latest
                 '''
             }
         }
 
         // ============================================================
-        // 9. Push Images to Docker Hub
+        // 10. Push Images to Docker Hub
         // ============================================================
         stage("Push to Docker Hub") {
             steps {
@@ -160,17 +184,27 @@ pipeline {
                         -u "$dockerHubUser" \
                         --password-stdin
 
-                        docker image tag deployguard-backend:latest \
-                        "$dockerHubUser/deployguard-backend:latest"
+                        echo "Tagging Backend Image..."
 
-                        docker image tag deployguard-frontend:latest \
-                        "$dockerHubUser/deployguard-frontend:latest"
+                        docker image tag \
+                        workboard-backend:latest \
+                        "$dockerHubUser/workboard-backend:latest"
+
+                        echo "Tagging Frontend Image..."
+
+                        docker image tag \
+                        workboard-frontend:latest \
+                        "$dockerHubUser/workboard-frontend:latest"
+
+                        echo "Pushing Backend Image..."
 
                         docker push \
-                        "$dockerHubUser/deployguard-backend:latest"
+                        "$dockerHubUser/workboard-backend:latest"
+
+                        echo "Pushing Frontend Image..."
 
                         docker push \
-                        "$dockerHubUser/deployguard-frontend:latest"
+                        "$dockerHubUser/workboard-frontend:latest"
 
                         docker logout
                     '''
@@ -179,26 +213,28 @@ pipeline {
         }
 
         // ============================================================
-        // 10. Deploy Application
+        // 11. Deploy WorkBoard
         // ============================================================
         stage("Deploy") {
             steps {
-                echo "Starting DeployGuard Application..."
+
+                echo "Starting WorkBoard Application..."
 
                 sh "docker compose up -d"
 
-                echo "Checking DeployGuard Running Containers..."
+                echo "Checking WorkBoard Running Containers..."
 
                 sh "docker compose ps"
             }
         }
 
         // ============================================================
-        // 11. Health Check
+        // 12. Health Check
         // ============================================================
         stage("Health Check") {
             steps {
-                echo "Checking Application Health..."
+
+                echo "Checking WorkBoard Application Health..."
 
                 sh '''
                     sleep 10
@@ -209,30 +245,32 @@ pipeline {
 
                     curl -f http://localhost:8070/ || exit 1
 
-                    echo "DeployGuard Health Check Passed."
+                    echo "WorkBoard Health Check Passed."
                 '''
             }
         }
     }
 
+    // ================================================================
+    // Pipeline Result
+    // ================================================================
     post {
 
         success {
-            echo "======================================"
-            echo "DeployGuard Pipeline SUCCESS"
-            echo "CI/CD + DevSecOps Completed"
-            echo "======================================"
+            echo "=========================================="
+            echo "WorkBoard CI/CD + DevSecOps SUCCESS"
+            echo "=========================================="
         }
 
         failure {
-            echo "======================================"
-            echo "DeployGuard Pipeline FAILED"
+            echo "=========================================="
+            echo "WorkBoard Pipeline FAILED"
             echo "Check Jenkins Console Output"
-            echo "======================================"
+            echo "=========================================="
         }
 
         always {
-            echo "Pipeline execution completed."
+            echo "WorkBoard Pipeline Execution Completed."
         }
     }
 }
