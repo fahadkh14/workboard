@@ -1,4 +1,3 @@
-```groovy
 pipeline {
 
     agent { label "workboard" }
@@ -10,9 +9,6 @@ pipeline {
 
     stages {
 
-        // ============================================================
-        // 1. Clone WorkBoard Source Code
-        // ============================================================
         stage("Copy Code") {
             steps {
                 echo "Cloning WorkBoard Repository..."
@@ -22,9 +18,6 @@ pipeline {
             }
         }
 
-        // ============================================================
-        // 2. Environment Check
-        // ============================================================
         stage("Environment Check") {
             steps {
                 echo "Checking Build Environment..."
@@ -37,9 +30,6 @@ pipeline {
             }
         }
 
-        // ============================================================
-        // 3. Secret Scan - Gitleaks
-        // ============================================================
         stage("Security - Gitleaks") {
             steps {
                 echo "Scanning WorkBoard for Hardcoded Secrets..."
@@ -56,9 +46,6 @@ pipeline {
             }
         }
 
-        // ============================================================
-        // 4. SAST - Semgrep
-        // ============================================================
         stage("Security - Semgrep SAST") {
             steps {
                 echo "Running Static Application Security Testing..."
@@ -75,9 +62,6 @@ pipeline {
             }
         }
 
-        // ============================================================
-        // 5. SonarQube Code Quality
-        // ============================================================
         stage("Code Quality - SonarQube") {
             steps {
                 echo "Running SonarQube Analysis..."
@@ -93,9 +77,6 @@ pipeline {
             }
         }
 
-        // ============================================================
-        // 6. OWASP Dependency Check
-        // ============================================================
         stage("Security - Dependency Check") {
             steps {
                 echo "Running OWASP Dependency Check..."
@@ -113,9 +94,6 @@ pipeline {
             }
         }
 
-        // ============================================================
-        // 7. Docker Compose Configuration Test
-        // ============================================================
         stage("Test") {
             steps {
                 echo "Testing WorkBoard Docker Compose Configuration..."
@@ -124,9 +102,6 @@ pipeline {
             }
         }
 
-        // ============================================================
-        // 8. Build Docker Images
-        // ============================================================
         stage("Build") {
             steps {
                 echo "Building WorkBoard Docker Images..."
@@ -135,9 +110,6 @@ pipeline {
             }
         }
 
-        // ============================================================
-        // 9. Trivy Docker Image Security Scan
-        // ============================================================
         stage("Security - Trivy") {
             steps {
                 echo "Scanning WorkBoard Docker Images..."
@@ -166,9 +138,6 @@ pipeline {
             }
         }
 
-        // ============================================================
-        // 10. Push Images to Docker Hub
-        // ============================================================
         stage("Push to Docker Hub") {
             steps {
 
@@ -212,9 +181,6 @@ pipeline {
             }
         }
 
-        // ============================================================
-        // 11. Deploy WorkBoard
-        // ============================================================
         stage("Deploy") {
             steps {
 
@@ -228,9 +194,6 @@ pipeline {
             }
         }
 
-        // ============================================================
-        // 12. Health Check
-        // ============================================================
         stage("Health Check") {
             steps {
 
@@ -251,9 +214,6 @@ pipeline {
         }
     }
 
-    // ================================================================
-    // Pipeline Result
-    // ================================================================
     post {
 
         success {
@@ -274,4 +234,3 @@ pipeline {
         }
     }
 }
-```
