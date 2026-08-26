@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { randomInt } from "crypto";
 import User from "../models/User.js";
 import { AppError } from "../utils/AppError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -34,10 +35,9 @@ export const register = asyncHandler(async (req, res) => {
     name,
     email,
     password,
-    avatarColor:
-      AVATAR_COLORS[
-        Math.floor(Math.random() * AVATAR_COLORS.length)
-      ],
+    avatarColor: AVATAR_COLORS[
+      randomInt(AVATAR_COLORS.length)
+    ],
   });
 
   res.status(201).json({
