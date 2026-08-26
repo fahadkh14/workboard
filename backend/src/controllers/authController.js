@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { randomInt } from "crypto";
+import { randomInt } from "node:crypto";
 import User from "../models/User.js";
 import { AppError } from "../utils/AppError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
