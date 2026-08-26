@@ -11,7 +11,9 @@ pipeline {
 
         stage("Copy Code") {
             steps {
+                echo "=========================================="
                 echo "Cloning WorkBoard Repository..."
+                echo "=========================================="
 
                 git url: "https://github.com/fahadkh14/workboard.git",
                     branch: "master"
@@ -23,6 +25,8 @@ pipeline {
                 echo "Checking Build Environment..."
 
                 sh '''
+                    set -e
+
                     echo "Docker:"
                     docker --version
 
@@ -34,13 +38,21 @@ pipeline {
 
                     echo "Java:"
                     java -version
+
+                    echo "Node:"
+                    node --version || true
+
+                    echo "NPM:"
+                    npm --version || true
                 '''
             }
         }
 
         stage("Security - Gitleaks") {
             steps {
-                echo "Scanning WorkBoard for Hardcoded Secrets..."
+                echo "=========================================="
+                echo "Scanning for Hardcoded Secrets..."
+                echo "=========================================="
 
                 sh '''
                     docker run --rm \
@@ -56,7 +68,9 @@ pipeline {
 
         stage("Security - Semgrep SAST") {
             steps {
+                echo "=========================================="
                 echo "Running Semgrep SAST..."
+                echo "=========================================="
 
                 sh '''
                     docker run --rm \
@@ -72,7 +86,9 @@ pipeline {
 
         stage("Code Quality - SonarQube") {
             steps {
+                echo "=========================================="
                 echo "Running SonarQube Analysis..."
+                echo "=========================================="
 
                 script {
 
@@ -94,20 +110,45 @@ pipeline {
 
         stage("SonarQube Quality Gate") {
             steps {
+                echo "=========================================="
                 echo "Checking SonarQube Quality Gate..."
+                echo "=========================================="
 
                 timeout(time: 5, unit: "MINUTES") {
 
-                    waitForQualityGate abortPipeline: true
+                    script {
+
+                        def qualityGate = waitForQualityGate()
+
+                        echo "SonarQube Quality Gate Status: ${qualityGate.status}"
+
+                        if (qualityGate.status != "OK") {
+
+                            error """
+                            SonarQube Quality Gate FAILED.
+
+                            Status: ${qualityGate.status}
+
+                            Pipeline stopped because the SonarQube
+                            Quality Gate did not pass.
+                            """
+                        }
+
+                        echo "SonarQube Quality Gate PASSED."
+                    }
                 }
             }
         }
 
         stage("Security - OWASP Dependency Check") {
             steps {
+                echo "=========================================="
                 echo "Running OWASP Dependency Check..."
+                echo "=========================================="
 
                 sh '''
+                    mkdir -p dependency-check-report
+
                     docker run --rm \
                     -v "$PWD:/src" \
                     owasp/dependency-check:latest \
@@ -122,7 +163,9 @@ pipeline {
 
         stage("Docker Compose Test") {
             steps {
-                echo "Validating Docker Compose Configuration..."
+                echo "=========================================="
+                echo "Validating Docker Compose..."
+                echo "=========================================="
 
                 sh '''
                     docker compose config
@@ -132,7 +175,9 @@ pipeline {
 
         stage("Build Docker Images") {
             steps {
+                echo "=========================================="
                 echo "Building WorkBoard Docker Images..."
+                echo "=========================================="
 
                 sh '''
                     docker compose build
@@ -142,7 +187,11 @@ pipeline {
 
         stage("Security - Trivy Backend") {
             steps {
-                echo "Scanning Backend Docker Image..."
+                echo "=========================================="
+                echo "Scanning Backend Image..."
+                echo "HIGH/CRITICAL vulnerabilities will STOP pipeline."
+                echo "LOW/MEDIUM vulnerabilities will be ignored."
+                echo "=========================================="
 
                 sh '''
                     docker run --rm \
@@ -151,6 +200,7 @@ pipeline {
                     image \
                     --severity HIGH,CRITICAL \
                     --exit-code 1 \
+                    --no-progress \
                     workboard-backend:latest
                 '''
             }
@@ -158,7 +208,11 @@ pipeline {
 
         stage("Security - Trivy Frontend") {
             steps {
-                echo "Scanning Frontend Docker Image..."
+                echo "=========================================="
+                echo "Scanning Frontend Image..."
+                echo "HIGH/CRITICAL vulnerabilities will STOP pipeline."
+                echo "LOW/MEDIUM vulnerabilities will be ignored."
+                echo "=========================================="
 
                 sh '''
                     docker run --rm \
@@ -167,6 +221,7 @@ pipeline {
                     image \
                     --severity HIGH,CRITICAL \
                     --exit-code 1 \
+                    --no-progress \
                     workboard-frontend:latest
                 '''
             }
@@ -174,6 +229,10 @@ pipeline {
 
         stage("Push to Docker Hub") {
             steps {
+
+                echo "=========================================="
+                echo "Pushing Images to Docker Hub..."
+                echo "=========================================="
 
                 withCredentials([
                     usernamePassword(
@@ -184,6 +243,10 @@ pipeline {
                 ]) {
 
                     sh '''
+                        set -e
+
+                        echo "Logging in to Docker Hub..."
+
                         echo "$dockerHubPass" | \
                         docker login \
                         -u "$dockerHubUser" \
@@ -211,6 +274,8 @@ pipeline {
                         docker push \
                         "$dockerHubUser/workboard-frontend:latest"
 
+                        echo "Logging out from Docker Hub..."
+
                         docker logout
                     '''
                 }
@@ -220,12 +285,18 @@ pipeline {
         stage("Deploy") {
             steps {
 
+                echo "=========================================="
                 echo "Deploying WorkBoard Application..."
+                echo "=========================================="
 
                 sh '''
                     docker compose down || true
 
                     docker compose up -d
+
+                    echo "Waiting for containers..."
+
+                    sleep 10
 
                     docker compose ps
                 '''
@@ -235,19 +306,26 @@ pipeline {
         stage("Health Check") {
             steps {
 
-                echo "Checking WorkBoard Application Health..."
+                echo "=========================================="
+                echo "Running WorkBoard Health Check..."
+                echo "=========================================="
 
                 sh '''
-                    sleep 10
+                    set -e
+
+                    sleep 5
 
                     echo "Running Containers:"
                     docker compose ps
 
                     echo "Checking Frontend..."
 
-                    curl -f http://localhost:8070/ || exit 1
+                    curl -f http://localhost:8070/
 
+                    echo ""
+                    echo "=========================================="
                     echo "WorkBoard Application is Healthy."
+                    echo "=========================================="
                 '''
             }
         }
@@ -259,12 +337,16 @@ pipeline {
             echo "=========================================="
             echo "WORKBOARD CI/CD + DEVSECOPS SUCCESS"
             echo "=========================================="
+            echo "All security checks passed."
+            echo "Docker images pushed successfully."
+            echo "Application deployed successfully."
         }
 
         failure {
             echo "=========================================="
             echo "WORKBOARD PIPELINE FAILED"
-            echo "CHECK JENKINS CONSOLE OUTPUT"
+            echo "=========================================="
+            echo "Check Jenkins Console Output."
             echo "=========================================="
         }
 
