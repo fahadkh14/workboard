@@ -1,4 +1,9 @@
-import { createContext, useCallback, useContext, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useState,
+} from "react";
 import { CheckCircle2, XCircle, X } from "lucide-react";
 
 const ToastContext = createContext(null);
@@ -7,7 +12,7 @@ export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
 
   const push = useCallback((message, type = "success") => {
-    const id = Math.random().toString(36).slice(2);
+    const id = crypto.randomUUID();
 
     setToasts((t) => [...t, { id, message, type }]);
 
@@ -47,8 +52,10 @@ export function ToastProvider({ children }) {
             </span>
 
             <button
+              type="button"
               onClick={() => dismiss(t.id)}
               className="text-muted hover:text-text"
+              aria-label="Dismiss notification"
             >
               <X size={14} />
             </button>
