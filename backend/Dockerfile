@@ -14,6 +14,11 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=5431
 
+# Update Alpine security packages
+RUN apk update && \
+    apk upgrade && \
+    rm -rf /var/cache/apk/*
+
 RUN addgroup -S workboard && \
     adduser -S workboard -G workboard
 
@@ -21,7 +26,9 @@ COPY --from=dependencies /app/node_modules ./node_modules
 COPY package*.json ./
 COPY src ./src
 
-RUN chown -R workboard:workboard /app
+RUN rm -rf /usr/local/lib/node_modules/npm && \
+    rm -f /usr/local/bin/npm /usr/local/bin/npx && \
+    chown -R workboard:workboard /app
 
 USER workboard
 
