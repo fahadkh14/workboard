@@ -10,3 +10,10 @@ jobs:
   code-quality:
     uses: ./.github/workflows/code-quality.yml
 
+  # Secret Scanning using gitleaks
+  secret-scan:
+    uses: ./.github/workflows/secret-scanning.yml
+   
+
+
+
