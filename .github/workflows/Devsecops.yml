@@ -17,6 +17,12 @@ jobs:
   # Dependecy scan
   dependency-scan:
     uses: ./.github/workflows/dependency-scan.yml  
+
+  #Docker Scan and trivay,hdolint
+  docker-scan:
+    uses: ./.github/workflows/docker-scan.yml
+    sercrets: inherit
+
    
 
 
