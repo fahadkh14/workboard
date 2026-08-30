@@ -1,4 +1,4 @@
-```yaml
+
 name: Code Quality
 
 on:
@@ -51,4 +51,4 @@ jobs:
       - name: Run Backend Linter
         working-directory: backend
         run: npm run lint
-```
+
