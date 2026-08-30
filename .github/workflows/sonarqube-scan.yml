@@ -1,7 +1,8 @@
+
 name: SonarQube
 
 on:
-    workflow_call:
+  workflow_call:
 
 jobs:
   sonar-scanner:
@@ -9,10 +10,11 @@ jobs:
 
     steps:
       - name: Code Checkout
-        uses: action/checkout@v7
+        uses: actions/checkout@v4
 
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v8.2.0  
+        uses: SonarSource/sonarqube-scan-action@v8.2.0
         env:
-            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} 
-            SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL}}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+=
