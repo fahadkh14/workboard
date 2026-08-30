@@ -34,7 +34,7 @@ jobs:
   #push to Docker hub
   docker-push:
       uses: ./.github/workflows/docker-push.yml
-      needs: [code-quality,  code-test, sonar-qube,docker-scans,dependency-scan,secret-scanning ]
+      needs: [code-quality,  code-test, sonar-scan,docker-scan,dependency-scan,secret-scan ]
       secrets: inherit
 
    #------ CD ------  
