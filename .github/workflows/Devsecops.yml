@@ -1,7 +1,9 @@
 name: DevSecOps
 
 on:
-  workflow_call:
+   push:
+    branches:
+      - master
 
 jobs:
   # Code Quality / Shift Left
