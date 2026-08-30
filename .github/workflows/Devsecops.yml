@@ -21,7 +21,7 @@ jobs:
   #Docker Scan and trivay,hdolint
   docker-scan:
     uses: ./.github/workflows/docker-scan.yml
-    sercrets: inherit
+    secrets: inherit
 
    
 
