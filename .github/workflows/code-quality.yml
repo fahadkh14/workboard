@@ -2,7 +2,7 @@
 name: Code Quality
 
 on:
-  push:
+   workflow_call:
 
 jobs:
   frontend-quality:
