@@ -1,0 +1,9 @@
+name: DevSecOps
+
+on:
+  workflow_call:
+
+jobs:
+    # Code Quality / Shift Left
+  code-quality:
+    uses: ./.github/workflows/code-quality.yml  
