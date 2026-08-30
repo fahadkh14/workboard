@@ -1,7 +1,7 @@
 name: Workboard CI
 
 on:
-    push:
+   workflow_dispatch:
 
 jobs:
     frontend-ci:
