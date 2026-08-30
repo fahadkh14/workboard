@@ -3,60 +3,46 @@ import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 
 export default [
-{
-ignores: ["node_modules/**", "dist/**", "build/**"],
-},
+  {
+    ignores: ["node_modules/**", "dist/**", "build/**"],
+  },
 
-js.configs.recommended,
+  js.configs.recommended,
 
-{
-files: ["**/*.{js,jsx}"],
+  {
+    files: ["**/*.{js,jsx}"],
 
-```
-plugins: {
-  "react-hooks": reactHooks,
-  "react-refresh": reactRefresh,
-},
+    plugins: {
+      "react-hooks": reactHooks,
+      "react-refresh": reactRefresh,
+    },
 
-languageOptions: {
-  ecmaVersion: "latest",
-  sourceType: "module",
+    languageOptions: {
+      ecmaVersion: "latest",
+      sourceType: "module",
 
-  parserOptions: {
-    ecmaFeatures: {
-      jsx: true,
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
+
+      globals: {
+        window: "readonly",
+        document: "readonly",
+        console: "readonly",
+        localStorage: "readonly",
+        sessionStorage: "readonly",
+        fetch: "readonly",
+        FormData: "readonly",
+        URL: "readonly",
+      },
+    },
+
+    rules: {
+      "no-unused-vars": "warn",
+      ...reactHooks.configs.recommended.rules,
+      "react-refresh/only-export-components": "warn",
     },
   },
-
-  globals: {
-    window: "readonly",
-    document: "readonly",
-    console: "readonly",
-    localStorage: "readonly",
-    sessionStorage: "readonly",
-    fetch: "readonly",
-    FormData: "readonly",
-    URL: "readonly",
-    URLSearchParams: "readonly",
-    setTimeout: "readonly",
-    clearTimeout: "readonly",
-    setInterval: "readonly",
-    clearInterval: "readonly",
-    crypto: "readonly",
-    CustomEvent: "readonly",
-  },
-},
-
-rules: {
-  "no-unused-vars": "warn",
-
-  ...reactHooks.configs.recommended.rules,
-
-  "react-hooks/set-state-in-effect": "warn",
-
-  "react-refresh/only-export-components": "warn",
-},
-```
-
-},
 ];
