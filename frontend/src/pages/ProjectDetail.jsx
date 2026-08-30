@@ -65,7 +65,10 @@ export default function ProjectDetail() {
       .catch(() => setError(true));
   }, [id]);
 
-  useEffect(load, [load]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional data fetch on mount/id change
+    load();
+  }, [load]);
 
   const toggleComplete = async (task) => {
     const nextStatus = task.status === "completed" ? "todo" : "completed";
@@ -185,7 +188,7 @@ export default function ProjectDetail() {
         </div>
       )}
 
-      <TaskDrawer task={activeTask} activity={activity} open={!!activeTask} onClose={() => setActiveTask(null)} onUpdate={updateTask} />
+      <TaskDrawer key={activeTask?._id} task={activeTask} activity={activity} open={!!activeTask} onClose={() => setActiveTask(null)} onUpdate={updateTask} />
     </div>
   );
 }

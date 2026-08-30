@@ -28,7 +28,10 @@ export default function Notifications() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(load, []);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional data fetch on mount
+    load();
+  }, []);
 
   const markRead = async (id) => {
     await api.patch(`/notifications/${id}/read`);

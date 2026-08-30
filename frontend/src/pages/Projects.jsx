@@ -95,7 +95,10 @@ export default function Projects() {
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(load, [load]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional data fetch on mount
+    load();
+  }, [load]);
 
   const createProject = async (payload) => {
     await api.post("/projects", payload);

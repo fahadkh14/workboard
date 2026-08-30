@@ -37,6 +37,7 @@ export default function MyTasks() {
   }, [filter]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional data fetch on mount/filter change
     load();
     window.addEventListener("wb:refresh", load);
     return () => window.removeEventListener("wb:refresh", load);
@@ -114,7 +115,7 @@ export default function MyTasks() {
         )}
       </div>
 
-      <TaskDrawer task={activeTask} activity={activity} open={!!activeTask} onClose={() => setActiveTask(null)} onUpdate={updateTask} />
+      <TaskDrawer key={activeTask?._id} task={activeTask} activity={activity} open={!!activeTask} onClose={() => setActiveTask(null)} onUpdate={updateTask} />
     </div>
   );
 }

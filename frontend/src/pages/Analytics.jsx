@@ -32,7 +32,10 @@ export default function Analytics() {
       .finally(() => setLoading(false));
   }, [range]);
 
-  useEffect(load, [load]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional data fetch on mount/range change
+    load();
+  }, [load]);
 
   if (error) return <ErrorState onRetry={load} />;
 

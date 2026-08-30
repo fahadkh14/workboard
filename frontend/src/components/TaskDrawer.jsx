@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { X } from "lucide-react";
 import Avatar from "./Avatar.jsx";
 import PriorityBadge from "./PriorityBadge.jsx";
@@ -6,8 +6,6 @@ import StatusBadge from "./StatusBadge.jsx";
 
 export default function TaskDrawer({ task, activity = [], open, onClose, onUpdate }) {
   const [local, setLocal] = useState(task);
-
-  useEffect(() => setLocal(task), [task]);
 
   if (!open || !local) return null;
 

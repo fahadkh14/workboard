@@ -1,14 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, FilePlus, FolderPlus, Settings } from "lucide-react";
 
 export default function CommandPalette({ open, onClose, recentTasks = [], recentProjects = [], onCreateTask }) {
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!open) setQuery("");
-  }, [open]);
 
   const commands = useMemo(
     () => [

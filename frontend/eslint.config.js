@@ -36,6 +36,12 @@ export default [
         fetch: "readonly",
         FormData: "readonly",
         URL: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+        setInterval: "readonly",
+        clearInterval: "readonly",
+        crypto: "readonly",
+        CustomEvent: "readonly",
       },
     },
 

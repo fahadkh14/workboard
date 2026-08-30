@@ -46,6 +46,7 @@ export default function Dashboard() {
   }, [range]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional data fetch on mount/range change
     load();
     const handler = () => load();
     window.addEventListener("wb:refresh", handler);
@@ -169,6 +170,7 @@ export default function Dashboard() {
       </div>
 
       <TaskDrawer
+        key={activeTask?._id}
         task={activeTask}
         activity={activity}
         open={!!activeTask}
