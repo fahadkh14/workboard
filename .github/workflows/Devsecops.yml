@@ -4,6 +4,7 @@ on:
   workflow_call:
 
 jobs:
-    # Code Quality / Shift Left
+  # Code Quality / Shift Left
   code-quality:
-    uses: ./.github/workflows/code-quality.yml  
+    uses: ./.github/workflows/code-quality.yml
+
