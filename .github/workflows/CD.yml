@@ -1,7 +1,7 @@
 name: Workboard CD 
 
 on: 
-  worflow_call:
+  workflow_call:
 
 jobs:
   deploy:
