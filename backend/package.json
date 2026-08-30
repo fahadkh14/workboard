@@ -6,7 +6,9 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
+    "lint": "eslint .",
     "dev": "node --watch src/server.js"
+    
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
