@@ -1,0 +1,20 @@
+
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: backend
+  namespace: workboard
+
+spec:
+  type: ClusterIP
+
+  selector:
+    app: backend
+
+  ports:
+    - name: http
+      protocol: TCP
+      port: 5431
+      targetPort: 5431
+

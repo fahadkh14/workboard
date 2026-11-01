@@ -1,0 +1,39 @@
+
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: backend
+  namespace: workboard
+  labels:
+    app: backend-workboard
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: backend
+
+  template:
+    metadata:
+      labels:
+        app: backend
+
+    spec:
+      containers:
+        - name: backend
+          image: fahadkh14/workboard-backend:latest
+          imagePullPolicy: Always
+
+          ports:
+            - name: http
+              containerPort: 5431
+              protocol: TCP
+
+          envFrom:
+            - configMapRef:
+                name: workboard-config
+            - secretRef:
+                name: workboard-secret
+
