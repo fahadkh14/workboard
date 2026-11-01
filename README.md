@@ -1,6 +1,6 @@
 # WorkBoard
 
-**Your team's work, beautifully organized.**
+
 
 WorkBoard is a premium, production-quality project & task management SaaS
 application. It includes a full dashboard, Kanban boards, project timelines,
