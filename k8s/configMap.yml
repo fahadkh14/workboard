@@ -6,7 +6,7 @@ metadata:
 data:
   NODE_ENV: "production"
   PORT: "5431"
-  DB_HOST: "mysql-service"
+  DB_HOST: "mysql"
   DB_PORT: "3306"
   DB_NAME: "workboard"
   DB_USER: "workboard"
