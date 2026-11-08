@@ -1,0 +1,71 @@
+
+# Workflow name
+name: GitOps Image Bump
+
+# Reusable workflow
+on:
+  workflow_call:
+    inputs:
+      image_tag:
+        required: true
+        type: string
+
+# Jobs
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      # Checkout repository
+      - name: Checkout WorkBoard
+        uses: actions/checkout@v7
+
+      # Install yq
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq \
+            https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      # Update Docker image references
+      - name: Update WorkBoard image references
+        env:
+          OWNER: ${{ vars.DOCKERHUB_USERNAME }}
+          TAG: ${{ inputs.image_tag }}
+        run: |
+          set -eu
+
+          # Update backend deployment image
+          f="gitops/k8s/backend-deployment.yml"
+          if [ -f "$f" ]; then
+            sed -i "s|image: .*workboard-backend:.*|image: ${OWNER}/workboard-backend:${TAG}|" "$f"
+          fi
+
+          # Update frontend deployment image
+          f="gitops/k8s/frontend-deployment.yml"
+          if [ -f "$f" ]; then
+            sed -i "s|image: .*workboard-frontend:.*|image: ${OWNER}/workboard-frontend:${TAG}|" "$f"
+          fi
+
+      # Commit and push updated manifests
+      - name: Commit and push
+        env:
+          TAG: ${{ inputs.image_tag }}
+        run: |
+          set -eu
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet; then
+            echo "Manifests already updated to ${TAG}; nothing to commit."
+            exit 0
+          fi
+
+          git add gitops/k8s/
+          git commit -m "ci: update WorkBoard images to ${TAG} [skip ci]"
+
+          git push origin HEAD:${GITHUB_REF_NAME}
