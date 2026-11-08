@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: workboard
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/fahadkh14/workboard.git
+    targetRevision: k8s
+    path: k8s
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: workboard
+
+  #ignoreDifferences:
+   # - group: apps
+    #  kind: Deployment
+     # jsonPointers:
+      #  - /spec/replicas
+
+  syncPolicy:
+    automated:
+      prune: true      # delete resources removed from Git
+      selfHeal: true   # revert manual drift back to Git
+    syncOptions:
+      - CreateNamespace=true
